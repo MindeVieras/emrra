@@ -1,9 +1,9 @@
-# Node.js AWS Album
+# Aws album app using Node.js, Express, Passport and MySql.
 
 This is a aws album app using Node.js, Express, Passport and MySql.
 
 ### Version
-0.0.2
+1.0.0
 
 ### Usage
 
@@ -14,14 +14,6 @@ Album requires [Node.js](https://nodejs.org/) v6.1+ to run.
 
 ```sh
 $ npm install
-```
-
-```sh
-$ bower install
-```
-
-```sh
-$ grunt
 ```
 
 ```sh
