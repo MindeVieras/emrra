@@ -1,12 +1,5 @@
 
-.sass-cache
 node_modules
-bower_components
-
-public/css
-public/js
-
-uploads
 
 aws-keys.json
 
