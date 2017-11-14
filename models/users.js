@@ -68,11 +68,11 @@ exports.create = function(req, res){
 // Gets users
 exports.getAll = function(req, res){
   console.log('gets all');
-  connection.query('SELECT * FROM userss', function(err, rows) {
+  connection.query('SELECT * FROM users', function(err, rows) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
-        res.json({ack:'ok', msg: 'User saved', id: rows.insertId});
+        res.json({ack:'ok', msg: 'Users list', data: rows});
       }
     });
 };
