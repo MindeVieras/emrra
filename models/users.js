@@ -11,24 +11,24 @@ exports.create = function(req, res){
 
   let input = req.body;
   
-  // vlaidate form
+  // // vlaidate form
   if (validator.isEmpty(input.username)) {
-    return res.json({ack:'err', msg: 'Username is required'});
+    res.json({ack:'err', msg: 'Username is required'});
   }
   if (validator.isLength(input.username, {min:0, max:4})) {
-    return res.json({ack:'err', msg: 'Username must be at least 5 chars long'});
+    res.json({ack:'err', msg: 'Username must be at least 5 chars long'});
   }
   if (!validator.isEmail(input.email) && !validator.isEmpty(input.email)){
-    return res.json({ack:'err', msg: 'Email must be valid'});
+    res.json({ack:'err', msg: 'Email must be valid'});
   }
-  if (validator.isEmpty(input.password) && !userId){
-    return res.json({ack:'err', msg: 'Password is required'});
+  if (validator.isEmpty(input.password)){
+    res.json({ack:'err', msg: 'Password is required'});
   }
   
   const userId = input.id || false;
   bcrypt.hash(input.password, 10, function(err, hash) {
     if (err) {
-      return res.json({ack:'err', msg: 'Cannot hash password'});
+      res.json({ack:'err', msg: 'Cannot hash password'});
     } else {    
       let data = {
           username : input.username,
@@ -55,9 +55,9 @@ exports.create = function(req, res){
       } else {
         connection.query('INSERT INTO users set ? ', data, function(err, rows) {
             if(err) {
-              return res.json({ack:'err', msg: err.sqlMessage});
+              res.json({ack:'err', msg: err.sqlMessage});
             } else {
-              return res.json({ack:'ok', msg: 'User saved', id: rows.insertId});
+              res.json({ack:'ok', msg: 'User saved', id: rows.insertId});
             }
           });
       }
