@@ -1,7 +1,7 @@
 
-var bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 const validator = require('validator');
-var connection = require('../config/db');
+const connection = require('../config/db');
 
 // Creates user
 exports.create = function(req, res){
