@@ -28,10 +28,10 @@ exports.authenticate = function(req, res){
             if (passMatch) {
               const jwtData = {
                 id: rows[0].id,
-                username: rows[0].username
+                username: rows[0].username,
+                access_level: rows[0].access_level
               };
-              let secret_key = rows[0].access_level === 100 ? config.admin_secret_key : config.secret_key;
-              const token = jwt.sign(jwtData, secret_key);
+              const token = jwt.sign(jwtData, config.secret_key);
               let userData = {
                 id: rows[0].id,
                 username: rows[0].username,

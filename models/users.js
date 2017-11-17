@@ -63,7 +63,7 @@ exports.create = function(req, res){
 
 // Gets users
 exports.getAll = function(req, res){
-  console.log('gets all');
+  // console.log('gets all');
   connection.query('SELECT * FROM users', function(err, rows) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
