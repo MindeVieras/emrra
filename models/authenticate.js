@@ -18,7 +18,7 @@ exports.authenticate = function(req, res){
     res.json({ack:'err', msg: 'Password is required'});
   }
 
-  connection.query("SELECT * FROM users WHERE username = ?",[input.username], function(err, rows){
+  connection.query("SELECT * FROM users WHERE username = ? LIMIT 1",[input.username], function(err, rows){
       if (err) {
         res.json({ack:'err', msg: err.sqlMessage});
       }
