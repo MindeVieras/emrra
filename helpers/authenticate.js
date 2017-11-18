@@ -17,8 +17,6 @@ function doAuth(req, res, next, access_level) {
     const bearer = bearerHeader.split(" ");
     const bearerToken = bearer[1];
     jwt.verify(bearerToken, config.secret_key, function(err, decoded){
-      console.log(decoded.access_level);
-      console.log(access_level);
       if (err) {
         res.json({ack:'err', msg: err.message});
       } else {

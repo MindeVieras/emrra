@@ -62,13 +62,86 @@ exports.create = function(req, res){
 };
 
 // Gets users
-exports.getAll = function(req, res){
+exports.getList = function(req, res){
   // console.log('gets all');
   connection.query('SELECT * FROM users', function(err, rows) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
-        res.json({ack:'ok', msg: 'Users list', data: rows});
+        const users = rows.map(function(u, i){
+          let usrObj = {
+            id: u.id,
+            initials: makeInitials(u.username, u.display_name),
+            username: u.username,
+            display_name: u.display_name,
+            email: u.email
+          };
+          return usrObj;
+        });
+        res.json({ack:'ok', msg: 'Users list', data: users});
       }
     });
 };
+
+// Gets one user
+exports.getOne = function(req, res){
+  if (typeof req.params.id != 'undefined' && !isNaN(req.params.id) && req.params.id > 0 && req.params.id.length) {
+    connection.query('SELECT * FROM users WHERE id = ? LIMIT 1', [req.params.id], function(err, rows) {
+      if(err) {
+        res.json({ack:'err', msg: err.sqlMessage});
+      } else {
+        if (rows.length) {
+          const user = {
+            id: rows[0].id,
+            initials: makeInitials(rows[0].username, rows[0].display_name),
+            username: rows[0].username,
+            display_name: rows[0].display_name,
+            email: rows[0].email
+          };
+          res.json({ack:'ok', msg: 'One user', data: user});
+        } else {
+          res.json({ack:'err', msg: 'No such user'});
+        }
+      }
+    });
+  } else {
+    res.json({ack:'err', msg: 'bad parameter'});
+  }
+};
+
+// Deletes user
+exports.delete = function(req, res){
+  if (typeof req.params.id != 'undefined' && !isNaN(req.params.id) && req.params.id > 0 && req.params.id.length) {
+    
+    connection.query('DELETE FROM users WHERE id = ?', [req.params.id], function(err, rows) {
+      if(err) {
+        res.json({ack:'err', msg: err.sqlMessage});
+      } else {
+        if (rows.affectedRows === 1) {
+          res.json({ack:'ok', msg: 'User deleted', data: req.params.id});
+        } else {
+          res.json({ack:'err', msg: 'No such user'});
+        }
+      }
+    });
+
+  } else {
+    res.json({ack:'err', msg: 'bad parameter'});
+  }
+};
+
+function makeInitials(username, display_name) {
+  if (!display_name || display_name.length < 2)
+    return username.slice(0,2).toUpperCase();
+
+  let ds = display_name.split(' ');
+  if (ds.length >= 2)
+    return ds[0].slice(0,1).toUpperCase()+ds[1].slice(0,1).toUpperCase();
+
+  if (ds.length === 1 && display_name.length >= 2)
+    return display_name.slice(0,2).toUpperCase();
+
+  return 'N/A';
+}
+
+
