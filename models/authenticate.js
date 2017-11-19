@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const validator = require('validator');
 const connection = require('../config/db');
 const jwt = require('jsonwebtoken');
+const moment = require('moment');
 
 const config = require('../config/config');
 
@@ -17,36 +18,47 @@ exports.authenticate = function(req, res){
   } else if (validator.isEmpty(input.password)){
     res.json({ack:'err', msg: 'Password is required'});
   } else {
-    connection.query("SELECT * FROM users WHERE username = ? LIMIT 1",[input.username], function(err, rows){
-        if (err) {
-          res.json({ack:'err', msg: err.sqlMessage});
+    connection.query("SELECT * FROM users WHERE username = ? LIMIT 1",[input.username], function(err, user){
+      if (err) {
+        res.json({ack:'err', msg: err.sqlMessage});
+      } else {
+        if (user.length === 0) {
+          res.json({ack:'err', msg: 'Incorrect details'});
         } else {
-          if (rows.length === 0) {
-            res.json({ack:'err', msg: 'Incorrect details'});
+          const passMatch = bcrypt.compareSync(input.password, user[0].password);
+          if (passMatch) {
+            let login_date = moment().format('YYYY-MM-DD HH:mm:ss');
+            connection.query('UPDATE users SET last_login = ? WHERE id = ?', [login_date, user[0].id], function(err, rows){
+              if (err) {
+                res.json({ack:'err', msg: err.sqlMessage});
+              } else {
+                if (rows.affectedRows === 1) {                
+                  const jwtData = {
+                    id: user[0].id,
+                    username: user[0].username,
+                    access_level: user[0].access_level
+                  };
+                  const token = jwt.sign(jwtData, config.secret_key);
+                  let userData = {
+                    id: user[0].id,
+                    username: user[0].username,
+                    display_name: user[0].display_name,
+                    email: user[0].user,
+                    access_level: user[0].access_level,
+                    token
+                  };
+                  res.json({ack:'ok', msg: 'Authentication ok', data: userData});
+                } else {
+                  res.json({ack:'err', msg: 'Connot set last login date'});
+                }
+              }
+            });
           } else {
-            const passMatch = bcrypt.compareSync(input.password, rows[0].password);
-            if (passMatch) {
-              const jwtData = {
-                id: rows[0].id,
-                username: rows[0].username,
-                access_level: rows[0].access_level
-              };
-              const token = jwt.sign(jwtData, config.secret_key);
-              let userData = {
-                id: rows[0].id,
-                username: rows[0].username,
-                display_name: rows[0].display_name,
-                email: rows[0].email,
-                access_level: rows[0].access_level,
-                token
-              };
-              res.json({ack:'ok', msg: 'Authentication ok', data: userData});
-            } else {
-              res.json({ack:'err', msg: 'Incorrect details'});
-            }
-            
+            res.json({ack:'err', msg: 'Incorrect details'});
           }
+          
         }
+      }
 
     });
   }
