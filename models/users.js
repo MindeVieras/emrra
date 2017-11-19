@@ -6,9 +6,8 @@ const connection = require('../config/db');
 // Creates user
 exports.create = function(req, res){
 
-  // console.log(req.headers);
-
   const input = req.body;
+  // console.log(input);
   // // vlaidate input
   if (validator.isEmpty(input.username)) {
     res.json({ack:'err', msg: 'Username is required'});
@@ -39,11 +38,11 @@ exports.create = function(req, res){
                   email : input.email,
                   password: hash,
                   display_name: input.display_name,
-                  access_level: input.access_level || 25,
-                  author: input.author || 0,
-                  status: input.status || 0
+                  access_level: input.access_level,
+                  author: input.author,
+                  status: input.status ? 1 : 0
               };
-
+              // console.log(data);
               connection.query('INSERT INTO users set ? ', data, function(err, rows) {
                   if(err) {
                     res.json({ack:'err', msg: err.sqlMessage});
