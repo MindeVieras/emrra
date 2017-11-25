@@ -7,7 +7,6 @@ const connection = require('../config/db');
 exports.create = function(req, res){
 
   const input = req.body;
-  // console.log(input);
   // // vlaidate input
   if (validator.isEmpty(input.username)) {
     res.json({ack:'err', msg: 'Username is required'});
@@ -47,6 +46,10 @@ exports.create = function(req, res){
                   if(err) {
                     res.json({ack:'err', msg: err.sqlMessage});
                   } else {
+                    // Attach avatar to user if any
+                    if (input.avatar.id) {
+                      connection.query('UPDATE media SET type_id = ? WHERE id = ?', [rows.insertId, input.avatar.id]);
+                    }
                     res.json({ack:'ok', msg: 'User saved', id: rows.insertId});
                   }
                 });
@@ -56,24 +59,35 @@ exports.create = function(req, res){
       }
     });
   }
-  
-  
+
 };
 
 // Gets users
 exports.getList = function(req, res){
-  // console.log('gets all');
-  connection.query('SELECT * FROM users', function(err, rows) {
+
+  connection.query(`SELECT
+                      u.*,
+                      m.s3_key
+                    FROM users AS u
+                      LEFT JOIN media AS m ON u.id = m.type_id
+                    ORDER BY u.id`,
+    function(err, rows) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
         const users = rows.map(function(u, i){
+          let initials = require('../helpers/utils').makeInitials(u.username, u.display_name);
+          let avatar = false;
+          if (u.s3_key) {
+            avatar = require('../helpers/media').img(u.s3_key);
+          }
           let usrObj = {
             id: u.id,
-            initials: makeInitials(u.username, u.display_name),
+            initials,
             username: u.username,
             display_name: u.display_name,
-            email: u.email
+            email: u.email,
+            avatar
           };
           return usrObj;
         });
@@ -90,9 +104,10 @@ exports.getOne = function(req, res){
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
         if (rows.length) {
+          let initials = require('../helpers/utils').makeInitials(rows[0].username, rows[0].display_name);
           const user = {
             id: rows[0].id,
-            initials: makeInitials(rows[0].username, rows[0].display_name),
+            initials,
             username: rows[0].username,
             display_name: rows[0].display_name,
             email: rows[0].email
@@ -128,19 +143,3 @@ exports.delete = function(req, res){
     res.json({ack:'err', msg: 'bad parameter'});
   }
 };
-
-function makeInitials(username, display_name) {
-  if (!display_name || display_name.length < 2)
-    return username.slice(0,2).toUpperCase();
-
-  let ds = display_name.split(' ');
-  if (ds.length >= 2)
-    return ds[0].slice(0,1).toUpperCase()+ds[1].slice(0,1).toUpperCase();
-
-  if (ds.length === 1 && display_name.length >= 2)
-    return display_name.slice(0,2).toUpperCase();
-
-  return 'N/A';
-}
-
-

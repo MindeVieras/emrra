@@ -21,6 +21,7 @@ app.get('/', function(req, res){
 
 require('./routes/authenticate')(app);
 require('./routes/users')(app);
+require('./routes/media')(app);
 require('./routes/upload')(app);
 
 // Start HTTP server

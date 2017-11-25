@@ -6,6 +6,7 @@ const multerS3 = require('multer-s3');
 const config = require('../config/config');
 
 const Upload = require('../models/upload');
+
 const Auth = require('../helpers/authenticate');
 
 AWS.config.loadFromPath('./aws-keys.json');
@@ -30,8 +31,7 @@ const upload = multer({
 
 });
 
-module.exports = function(app, passport) {
+module.exports = function(app) {
 
-  app.post('/api/upload/avatar', Auth.isAuthed, upload.single('file'), Upload.avatar);
-
+  app.post('/api/upload', Auth.isAuthed, upload.single('file'), Upload.upload);
 };
