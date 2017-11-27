@@ -99,18 +99,29 @@ exports.getList = function(req, res){
 // Gets one user
 exports.getOne = function(req, res){
   if (typeof req.params.id != 'undefined' && !isNaN(req.params.id) && req.params.id > 0 && req.params.id.length) {
-    connection.query('SELECT * FROM users WHERE id = ? LIMIT 1', [req.params.id], function(err, rows) {
+    connection.query(`SELECT
+                        u.*,
+                        m.s3_key
+                      FROM users AS u
+                        LEFT JOIN media AS m ON u.id = m.type_id
+                      WHERE u.id = ?
+                      LIMIT 1`, [req.params.id], function(err, rows) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
         if (rows.length) {
           let initials = require('../helpers/utils').makeInitials(rows[0].username, rows[0].display_name);
+          let avatar = false;
+          if (rows[0].s3_key) {
+            avatar = require('../helpers/media').img(rows[0].s3_key);
+          }
           const user = {
             id: rows[0].id,
             initials,
             username: rows[0].username,
             display_name: rows[0].display_name,
-            email: rows[0].email
+            email: rows[0].email,
+            avatar
           };
           res.json({ack:'ok', msg: 'One user', data: user});
         } else {
