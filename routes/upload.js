@@ -18,11 +18,10 @@ const upload = multer({
     s3: s3,
     serverSideEncryption: 'AES256',
     bucket: config.bucket,
-    metadata: function (req, file, cb) {
-      cb(null, {fieldName: file.fieldname});
-    },
+    // metadata: function (req, file, cb) {
+    //   cb(null, {fieldName: file.fieldname});
+    // },
     key: function (req, file, cb) {
-      // get file extention
       rand = Math.floor((Math.random() * 9999999) + 1);
       ext = path.extname(file.originalname);
       cb(null, 'media/'+Date.now().toString()+'-'+rand+ext.toLowerCase());
@@ -33,5 +32,6 @@ const upload = multer({
 
 module.exports = function(app) {
 
-  app.post('/api/upload', Auth.isAuthed, upload.single('file'), Upload.upload);
+  app.post('/api/upload', Auth.isAuthed, upload.array('qqfile'), Upload.upload);
+
 };

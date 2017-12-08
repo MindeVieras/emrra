@@ -1,38 +1,38 @@
 
 const connection = require('../config/db');
 
-// Creates user
+// Uploads file
 exports.upload = function(req, res){
+  
+  if (req.files) {
 
-  if (req.file) {
-
-    const file = req.file;
+    const file = req.files[0];
     const author = req.body.author || 1;
     const status = req.body.status || 0;
-    const content_type = req.body.content_type || 0;
+    const entity = req.body.entity || 0;
 
     let fileData = {
       s3_key : file.key,
       mime: file.mimetype,
       filesize: file.size,
       org_filename : file.originalname,
-      content_type : content_type,
-      status : status,
-      author : author,
+      entity : parseInt(entity),
+      status : parseInt(status),
+      author : parseInt(author),
       weight: 0
     };
     // Insert file data to media table
     connection.query('INSERT INTO media set ? ', fileData, function(err, rows){
       if(err) {
-        res.json({ack:'err', msg: err.sqlMessage});
+        res.json({error: err.sqlMessage});
       } else {
-        fileData.id = rows.insertId;
-        res.json({ack: 'ok', msg: 'Media saved', data: fileData});
+        fileData.media_id = rows.insertId;
+        res.json({success: true, data: fileData});
       }
     });
     
   } else {
-    res.json({ack: 'err', msg: 'No file'});
+    res.json({error: 'No file'});
   }
   
   
