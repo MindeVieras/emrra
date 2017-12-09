@@ -21,53 +21,28 @@ exports.create = function(req, res){
       status: input.status ? 1 : 0
     };
     // console.log(data);
-    connection.query('INSERT INTO albums set ? ', data, function(err, rows) {
+    connection.query('INSERT INTO albums set ? ', data, function(err, row) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
-        res.json({ack:'ok', msg: 'Album saved', id: rows.insertId});
+
+        // attach media to album if any
+        if (input.media.length) {
+          input.media.forEach(function(file) {
+            var sql = "UPDATE media SET type_id = ?, status = ? WHERE id = ?";
+            connection.query(sql, [row.insertId, 1, file.media_id], function(err, rows) {
+              if (err) {
+                console.log(err)
+              } else {
+                console.log(rows)
+              }
+            });
+          });
+        }
+
+        res.json({ack:'ok', msg: 'Album saved', id: row.insertId});
       }
     });
-
-    // check if user exists
-    // connection.query('SELECT * FROM users WHERE username = ? LIMIT 1', [input.username], function(err, rows) {
-    //   if(err) {
-    //     res.json({ack:'err', msg: err.sqlMessage});
-    //   } else {
-    //     if (rows.length) {
-    //       res.json({ack:'err', msg: 'Username already taken'});
-    //     } else {
-    //       // hashes password
-    //       bcrypt.hash(input.password, 10, function(err, hash) {
-    //         if (err) {
-    //           res.json({ack:'err', msg: 'Cannot hash password'});
-    //         } else {    
-    //           let data = {
-    //               username : input.username,
-    //               email : input.email,
-    //               password: hash,
-    //               display_name: input.display_name,
-    //               access_level: input.access_level,
-    //               author: input.author,
-    //               status: input.status ? 1 : 0
-    //           };
-    //           // console.log(data);
-    //           connection.query('INSERT INTO users set ? ', data, function(err, rows) {
-    //               if(err) {
-    //                 res.json({ack:'err', msg: err.sqlMessage});
-    //               } else {
-    //                 // Attach avatar to user if any
-    //                 if (input.avatar.id) {
-    //                   connection.query('UPDATE media SET type_id = ? WHERE id = ?', [rows.insertId, input.avatar.id]);
-    //                 }
-    //                 res.json({ack:'ok', msg: 'User saved', id: rows.insertId});
-    //               }
-    //             });
-    //         }
-    //       });
-    //     }
-    //   }
-    // });
   }
 
 };
