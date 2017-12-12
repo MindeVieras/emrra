@@ -1,5 +1,4 @@
 
-
 const path = require('path');
 const AWS = require('aws-sdk');
 AWS.config.loadFromPath('./aws-keys.json');
@@ -8,7 +7,7 @@ const config = require('../config/config');
 
 // Image url helper
 exports.img = function(key) {
-  console.log(key);
+  // console.log(key);
   // var thumbKey = 'thumbs/'+size+'/'+path.basename(key);
 
   var params = {

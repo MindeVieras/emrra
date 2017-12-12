@@ -2,6 +2,8 @@
 const validator = require('validator');
 const connection = require('../config/db');
 
+const Media = require('./media');
+
 // Creates album
 exports.create = function(req, res){
 
@@ -30,13 +32,7 @@ exports.create = function(req, res){
         if (input.media.length) {
           input.media.forEach(function(file) {
             var sql = "UPDATE media SET type_id = ?, status = ? WHERE id = ?";
-            connection.query(sql, [row.insertId, 1, file.media_id], function(err, rows) {
-              if (err) {
-                console.log(err)
-              } else {
-                console.log(rows)
-              }
-            });
+            connection.query(sql, [row.insertId, 1, file.media_id]);
           });
         }
 
@@ -58,3 +54,52 @@ exports.getList = function(req, res){
       }
     });
 };
+
+// Gets one album
+exports.getOne = function(req, res){
+  if (typeof req.params.id != 'undefined' && !isNaN(req.params.id) && req.params.id > 0 && req.params.id.length) {
+    connection.query(`SELECT * FROM albums WHERE id = ? LIMIT 1`, [req.params.id], function(err, rows) {
+      if(err) {
+        res.json({ack:'err', msg: err.sqlMessage});
+      } else {
+        if (rows.length) {
+          Media.getAlbumMedia(req.params.id, function(err, media){
+            const mediaData = [];
+            media.forEach(function(m){
+              let key = require('../helpers/media').img(m.s3_key);
+              mediaData.push({id:m.id,key:key});
+            });
+            rows[0].media = mediaData;
+            res.json({ack:'ok', msg: 'One album', data: rows[0]});
+          });
+        } else {
+          res.json({ack:'err', msg: 'No such Album'});
+        }
+      }
+    });
+  } else {
+    res.json({ack:'err', msg: 'bad parameter'});
+  }
+};
+
+// Deletes album
+exports.delete = function(req, res){
+  if (typeof req.params.id != 'undefined' && !isNaN(req.params.id) && req.params.id > 0 && req.params.id.length) {
+    const id = req.params.id;
+    connection.query('DELETE FROM albums WHERE id = ?', [id], function(err, rows) {
+      if(err) {
+        res.json({ack:'err', msg: err.sqlMessage});
+      } else {
+        if (rows.affectedRows === 1) {
+          res.json({ack:'ok', msg: 'Album deleted', data: req.params.id});
+        } else {
+          res.json({ack:'err', msg: 'No such album'});
+        }
+      }
+    });
+
+  } else {
+    res.json({ack:'err', msg: 'bad parameter'});
+  }
+};
+

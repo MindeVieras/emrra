@@ -28,6 +28,17 @@ exports.save = function(req, res){
   });
 };
 
+exports.getAlbumMedia = function(id, cb) {
+    // get media
+  connection.query('SELECT * FROM media WHERE type_id = ? ', id, function(err, rows){
+    if(err) {
+      cb(err.sqlMessage);
+    } else {
+      cb(null, rows);
+    }
+  });
+}
+
 // // Get image metadata from lambda and save to DB
 // exports.saveExif = function(req, res){
 //     // res.setHeader('Content-Type', 'application/json');

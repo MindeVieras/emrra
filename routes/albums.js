@@ -6,7 +6,7 @@ module.exports = function(app) {
 
   app.post('/api/albums/create', Auth.isAuthed, Albums.create);
   app.get('/api/albums/get-list', Auth.isAuthed, Albums.getList);
-  // app.get('/api/albums/get-one/:id', Auth.isAuthed, Albums.getOne);
-  // app.delete('/api/albums/delete/:id', Auth.isAuthed, Albums.delete);
+  app.get('/api/albums/get-one/:id', Auth.isAuthed, Albums.getOne);
+  app.delete('/api/albums/delete/:id', Auth.isAuthed, Albums.delete);
 
 };
