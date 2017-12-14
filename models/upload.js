@@ -1,4 +1,5 @@
 
+const uuidv4 = require('uuid/v4');
 const connection = require('../config/db');
 
 // Uploads file
@@ -37,3 +38,24 @@ exports.upload = function(req, res){
   
   
 };
+
+exports.getInitialFiles = function(req, res) {
+  // Get all media
+  const entity_id = req.params.id;
+  connection.query('SELECT * FROM media WHERE type_id = ?', entity_id, function(err, rows){
+    if(err) {
+      res.json({ack:'err', msg: err.sqlMessage});
+    } else {
+      let media = [];
+      rows.forEach(function(m){
+        media.push({
+          uuid: uuidv4(),
+          name: m.org_filename,
+          size: m.filesize,
+          thumbnailUrl: require('../helpers/media').img(m.s3_key)
+        });
+      });
+      res.json(media);
+    }
+  });
+}

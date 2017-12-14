@@ -1,4 +1,5 @@
 
+const uuidv4 = require('uuid/v4');
 const connection = require('../config/db');
 
 // Save uploaded media data in DB
@@ -35,6 +36,24 @@ exports.getAlbumMedia = function(id, cb) {
       cb(err.sqlMessage);
     } else {
       cb(null, rows);
+    }
+  });
+}
+
+exports.getAll = function(req, res) {
+  // Get all media
+  connection.query('SELECT * FROM media', function(err, rows){
+    if(err) {
+      res.json({ack:'err', msg: err.sqlMessage});
+    } else {
+      let media = [];
+      rows.forEach(function(m){
+        media.push({
+          uuid: uuidv4(),
+          name: m.org_filename
+        });
+      });
+      res.json(media);
     }
   });
 }

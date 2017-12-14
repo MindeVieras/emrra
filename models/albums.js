@@ -1,5 +1,7 @@
 
 const validator = require('validator');
+const uuidv4 = require('uuid/v4');
+
 const connection = require('../config/db');
 
 const Media = require('./media');
@@ -63,15 +65,7 @@ exports.getOne = function(req, res){
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
         if (rows.length) {
-          Media.getAlbumMedia(req.params.id, function(err, media){
-            const mediaData = [];
-            media.forEach(function(m){
-              let key = require('../helpers/media').img(m.s3_key);
-              mediaData.push({id:m.id,key:key});
-            });
-            rows[0].media = mediaData;
-            res.json({ack:'ok', msg: 'One album', data: rows[0]});
-          });
+          res.json({ack:'ok', msg: 'One album', data: rows[0]});
         } else {
           res.json({ack:'err', msg: 'No such Album'});
         }

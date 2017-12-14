@@ -14,7 +14,13 @@ app.use(bodyParser.urlencoded({
   limit: '50mb'
 }));
 app.use(bodyParser.json());
-app.use(cors());
+
+const corsOptions = {
+  origin: '*',
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204 
+}
+app.use(cors(corsOptions));
+
 app.get('/', function(req, res){
   res.sendFile(path.join(__dirname, './index.html'));
 })
