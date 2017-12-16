@@ -36,7 +36,7 @@ exports.attach = function(req, res){
   // const entity_id = req.body.entity_id;
   // console.log(entity_id)
   // // Update media data
-  // connection.query('UPDATE media SET type_id = ? WHERE id = ?', [entity_id, media_id], function(err, rows){
+  // connection.query('UPDATE media SET entity_id = ? WHERE id = ?', [entity_id, media_id], function(err, rows){
   //   if(err) {
   //     console.log(err.sqlMessage);
   //   } else {
@@ -47,7 +47,7 @@ exports.attach = function(req, res){
 
 exports.getAlbumMedia = function(id, cb) {
     // get media
-  connection.query('SELECT * FROM media WHERE type_id = ? ', id, function(err, rows){
+  connection.query('SELECT * FROM media WHERE entity_id = ? ', id, function(err, rows){
     if(err) {
       cb(err.sqlMessage);
     } else {
@@ -157,7 +157,7 @@ exports.getAll = function(req, res) {
 //     //return res.send({ack: 'ok', msg: values});
 
 //     // make DB query
-//     var sql = "INSERT INTO media (id) VALUES ? ON DUPLICATE KEY UPDATE type_id = ?, status = ?";
+//     var sql = "INSERT INTO media (id) VALUES ? ON DUPLICATE KEY UPDATE entity_id = ?, status = ?";
 //     connection.query(sql, [values, albumId, status], function(err, rows) {
 //         if (err) {
 //             return res.send(JSON.stringify({ack: 'err', msg: 'cant attach media'}));

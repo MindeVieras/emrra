@@ -48,7 +48,7 @@ exports.create = function(req, res){
                   } else {
                     // Attach avatar to user if any
                     if (input.avatar.id) {
-                      connection.query('UPDATE media SET type_id = ? WHERE id = ?', [rows.insertId, input.avatar.id]);
+                      connection.query('UPDATE media SET entity_id = ? WHERE id = ?', [rows.insertId, input.avatar.id]);
                     }
                     res.json({ack:'ok', msg: 'User saved', id: rows.insertId});
                   }
@@ -69,7 +69,7 @@ exports.getList = function(req, res){
                       u.*,
                       m.s3_key
                     FROM users AS u
-                      LEFT JOIN media AS m ON u.id = m.type_id
+                      LEFT JOIN media AS m ON u.id = m.entity_id
                     ORDER BY u.id`,
     function(err, rows) {
       if(err) {
@@ -103,7 +103,7 @@ exports.getOne = function(req, res){
                         u.*,
                         m.s3_key
                       FROM users AS u
-                        LEFT JOIN media AS m ON u.id = m.type_id
+                        LEFT JOIN media AS m ON u.id = m.entity_id
                       WHERE u.id = ?
                       LIMIT 1`, [req.params.id], function(err, rows) {
       if(err) {

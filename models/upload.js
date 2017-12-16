@@ -8,9 +8,10 @@ exports.upload = function(req, res){
   if (req.files) {
 
     const file = req.files[0];
-    const author = req.body.author || 1;
-    const status = req.body.status || 0;
-    const entity = req.body.entity || 0;
+    const author = req.body.author;
+    const entity = req.body.entity;
+    const entity_id = req.body.entity_id;
+    const status = req.body.status;
 
     let fileData = {
       s3_key: file.key,
@@ -18,6 +19,7 @@ exports.upload = function(req, res){
       filesize: file.size,
       org_filename: file.originalname,
       entity: parseInt(entity),
+      entity_id: parseInt(entity_id),
       status: parseInt(status),
       author: parseInt(author),
       weight: 0
@@ -42,7 +44,7 @@ exports.upload = function(req, res){
 exports.getInitialFiles = function(req, res) {
   // Get all media
   const entity_id = req.params.id;
-  connection.query('SELECT * FROM media WHERE type_id = ?', entity_id, function(err, rows){
+  connection.query('SELECT * FROM media WHERE entity_id = ?', entity_id, function(err, rows){
     if(err) {
       res.json({ack:'err', msg: err.sqlMessage});
     } else {
