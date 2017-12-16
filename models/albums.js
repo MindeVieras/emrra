@@ -61,6 +61,23 @@ exports.getOne = function(req, res){
   }
 };
 
+// Renames album
+exports.rename = function(req, res){
+
+  const input = req.body;
+  const name = input.name;
+  const id = input.id;
+  // console.log(data);
+  connection.query('UPDATE albums SET name = ? WHERE id = ?', [name, id], function(err, row) {
+    if(err) {
+      res.json({ack:'err', msg: err.sqlMessage});
+    } else {
+      res.json({ack:'ok', msg: 'Album renamed', id: row.insertId});
+    }
+  });
+
+};
+
 // Deletes album
 exports.delete = function(req, res){
   if (typeof req.params.id != 'undefined' && !isNaN(req.params.id) && req.params.id > 0 && req.params.id.length) {

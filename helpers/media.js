@@ -13,7 +13,7 @@ exports.img = function(key) {
   var params = {
     Bucket: config.bucket, 
     Key: key,
-    Expires: 10
+    Expires: 60
   };
 
   var url = s3.getSignedUrl('getObject', params);
