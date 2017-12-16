@@ -13,13 +13,13 @@ exports.upload = function(req, res){
     const entity = req.body.entity || 0;
 
     let fileData = {
-      s3_key : file.key,
+      s3_key: file.key,
       mime: file.mimetype,
       filesize: file.size,
-      org_filename : file.originalname,
-      entity : parseInt(entity),
-      status : parseInt(status),
-      author : parseInt(author),
+      org_filename: file.originalname,
+      entity: parseInt(entity),
+      status: parseInt(status),
+      author: parseInt(author),
       weight: 0
     };
     // Insert file data to media table

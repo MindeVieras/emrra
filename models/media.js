@@ -29,6 +29,22 @@ exports.save = function(req, res){
   });
 };
 
+// Attach media to album
+exports.attach = function(req, res){
+  console.log(req.body);
+  // const media_id = req.body.media_id;
+  // const entity_id = req.body.entity_id;
+  // console.log(entity_id)
+  // // Update media data
+  // connection.query('UPDATE media SET type_id = ? WHERE id = ?', [entity_id, media_id], function(err, rows){
+  //   if(err) {
+  //     console.log(err.sqlMessage);
+  //   } else {
+  //     // console.log(rows);
+  //   }
+  // });
+};
+
 exports.getAlbumMedia = function(id, cb) {
     // get media
   connection.query('SELECT * FROM media WHERE type_id = ? ', id, function(err, rows){
