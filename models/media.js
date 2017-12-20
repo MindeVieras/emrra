@@ -2,49 +2,6 @@
 const uuidv4 = require('uuid/v4');
 const connection = require('../config/db');
 
-// Save uploaded media data in DB
-exports.save = function(req, res){
-  const file = req.body.file;
-  const author = req.body.author;
-  const content_type = req.body.content_type;
-
-  let mediaData = {
-    s3_key : file.key,
-    mime: file.mimetype,
-    filesize: file.size,
-    org_filename : file.originalname,
-    content_type : content_type,
-    status : 0,
-    author : author,
-    weight: 0
-  };
-
-  // Insert media data
-  connection.query('INSERT INTO media set ? ', mediaData, function(err, rows){
-    if(err) {
-      res.json({ack:'err', msg: err.sqlMessage});
-    } else {
-      res.json({ack:'ok', msg: 'Media saved'});
-    }
-  });
-};
-
-// Attach media to album
-exports.attach = function(req, res){
-  console.log(req.body);
-  // const media_id = req.body.media_id;
-  // const entity_id = req.body.entity_id;
-  // console.log(entity_id)
-  // // Update media data
-  // connection.query('UPDATE media SET entity_id = ? WHERE id = ?', [entity_id, media_id], function(err, rows){
-  //   if(err) {
-  //     console.log(err.sqlMessage);
-  //   } else {
-  //     // console.log(rows);
-  //   }
-  // });
-};
-
 exports.getAlbumMedia = function(id, cb) {
     // get media
   connection.query('SELECT * FROM media WHERE entity_id = ? ', id, function(err, rows){
@@ -70,6 +27,19 @@ exports.getAll = function(req, res) {
         });
       });
       res.json(media);
+    }
+  });
+}
+
+exports.putToTrash = function(req, res) {
+  const uuid = req.body.qquuid;
+  const status = 2; // Media status TRASHED
+  //Put media file to trash
+  connection.query('UPDATE media SET status = ? WHERE uuid = ?', [status, uuid], function(err, rows){
+    if(err) {
+      res.json({ack:'err', msg: err.sqlMessage, error: err.sqlMessage});
+    } else {
+      res.json({ack: 'ok', msg: 'File removed to trash', success: true});
     }
   });
 }

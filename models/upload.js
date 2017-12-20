@@ -1,5 +1,4 @@
 
-const uuidv4 = require('uuid/v4');
 const connection = require('../config/db');
 
 // Uploads file
@@ -8,12 +7,14 @@ exports.upload = function(req, res){
   if (req.files) {
 
     const file = req.files[0];
+    const uuid = req.body.qquuid;
     const author = req.body.author;
     const entity = req.body.entity;
     const entity_id = req.body.entity_id;
     const status = req.body.status;
 
     let fileData = {
+      uuid: uuid,
       s3_key: file.key,
       mime: file.mimetype,
       filesize: file.size,
@@ -44,14 +45,15 @@ exports.upload = function(req, res){
 exports.getInitialFiles = function(req, res) {
   // Get all media
   const entity_id = req.params.id;
-  connection.query('SELECT * FROM media WHERE entity_id = ?', entity_id, function(err, rows){
+  const status = 1; // Media status ENABLED
+  connection.query('SELECT * FROM media WHERE entity_id = ? AND status = ?', [entity_id, status], function(err, rows){
     if(err) {
       res.json({ack:'err', msg: err.sqlMessage});
     } else {
       let media = [];
       rows.forEach(function(m){
         media.push({
-          uuid: uuidv4(),
+          uuid: m.uuid,
           name: m.org_filename,
           size: m.filesize,
           thumbnailUrl: require('../helpers/media').img(m.s3_key)

@@ -4,10 +4,6 @@ const Auth = require('../helpers/authenticate');
 
 module.exports = function(app) {
 
-  app.post('/api/media/save', Auth.isAuthed, Media.save);
-  app.post('/api/media/attach', Auth.isAuthed, Media.attach);
   app.get('/api/media/get-all', Auth.isAuthed, Media.getAll);
-  // app.get('/api/users/get-one/:id', Auth.isAdmin, Users.getOne);
-  // app.delete('/api/users/delete/:id', Auth.isAdmin, Users.delete);
-
+  app.post('/api/media/put-to-trash', Auth.isAuthed, Media.putToTrash);
 };
