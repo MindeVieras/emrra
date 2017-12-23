@@ -39,24 +39,36 @@ exports.upload = function(req, res){
     res.json({error: 'No file'});
   }
   
-  
 };
 
 exports.getInitialFiles = function(req, res) {
   // Get all media
   const entity_id = req.params.id;
   const status = 1; // Media status ENABLED
-  connection.query('SELECT * FROM media WHERE entity_id = ? AND status = ?', [entity_id, status], function(err, rows){
+  connection.query(`SELECT
+                      m.*,
+                      GROUP_CONCAT('"', mm.meta_name, '":"', mm.meta_value SEPARATOR '",') AS metadata
+                    FROM media AS m
+                      LEFT JOIN media_meta AS mm ON mm.media_id = m.id
+                    WHERE m.entity_id = ? AND m.status = ?
+                    GROUP BY m.id`, [entity_id, status], function(err, rows){
     if(err) {
       res.json({ack:'err', msg: err.sqlMessage});
     } else {
       let media = [];
       rows.forEach(function(m){
+        let metadata = {ack:'err', msg:'No metadata'};
+        if (m.metadata) {
+          metadata = JSON.parse('{'+m.metadata+'"}');
+          metadata.ack = 'ok';
+        };
+        // metadata 
         media.push({
           uuid: m.uuid,
           name: m.org_filename,
           size: m.filesize,
-          thumbnailUrl: require('../helpers/media').img(m.s3_key)
+          thumbnailUrl: require('../helpers/media').img(m.s3_key),
+          metadata
         });
       });
       res.json(media);
