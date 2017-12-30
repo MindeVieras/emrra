@@ -2,7 +2,7 @@
 const AWS = require('aws-sdk');
 AWS.config.loadFromPath('./aws-keys.json');
 const lambda = new AWS.Lambda();
-const config = require('../../config/config');
+const config = require('../../../config/config');
 
 module.exports.get = function(key, cb){
 

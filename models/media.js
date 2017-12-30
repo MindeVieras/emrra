@@ -2,7 +2,8 @@
 const uuidv4 = require('uuid/v4');
 const connection = require('../config/db');
 
-const getImageMeta = require('./lambda/get_image_metadata');
+const getImageMeta = require('./aws/lambda/get_image_metadata');
+const getRekognitionLabels = require('./aws/rekognition/get_labels');
 
 exports.getAlbumMedia = function(id, cb) {
     // get media
@@ -50,66 +51,66 @@ exports.putToTrash = function(req, res) {
 exports.saveImageMetadata = function(req, res){
   var key = req.body.key;
   var mediaId = req.body.media_id;
-  getImageMeta.get(key, function (err, metadata) {
-    // save metadata to DB if any
-    if (metadata !== null && typeof metadata === 'object') {
+  if (!key && !mediaId) {
+    res.json({ack:'err', msg: 'Wrong params'});
+  } else {  
+    getImageMeta.get(key, function (err, metadata) {
+      // save metadata to DB if any
+      if (metadata !== null && typeof metadata === 'object') {
+
+        // make meta array
+        var values = [];
+        Object.keys(metadata).forEach(function (key) {
+          let obj = metadata[key];
+          values.push([mediaId, key, obj]);
+        });
+        // make DB query
+        var sql = 'INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?';
+        connection.query(sql, [values], function(err, rows) {
+          if (err) {
+            res.json({ack:'err', msg: err.sqlMessage});
+          }
+          res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
+        });
+
+      } else {
+        res.json({ack:'err', msg: 'No metadata saved'});
+      }
+    });
+  }
+};
+
+// Get and Save Image Labels from AWS rekognition
+exports.saveRekognitionLabels = function(req, res){
+  var key = req.body.key;
+  var mediaId = req.body.media_id;
+  getRekognitionLabels.get(key, function(err, labels){
+    // save recognition labels to DB if any
+    var labels = labels.Labels;
+    if (labels !== null && typeof labels === 'object') {
 
       // make meta array
       var values = [];
-      Object.keys(metadata).forEach(function (key) {
-        let obj = metadata[key];
-        values.push([mediaId, key, obj]);
+      var labelsObj = new Object();
+      Object.keys(labels).forEach(function (key) {
+        let obj = labels[key];
+        values.push([mediaId, obj.Name, obj.Confidence]);
+        labelsObj[obj.Name] = obj.Confidence;
       });
       // make DB query
-      var sql = 'INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?';
+      var sql = "INSERT INTO rekognition (media_id, label, confidence) VALUES ?";
       connection.query(sql, [values], function(err, rows) {
         if (err) {
           res.json({ack:'err', msg: err.sqlMessage});
-        }
-        res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
+        } else {
+          res.json({ack:'ok', msg: 'Rekognition Labels saved', rekognition_labels: labelsObj});
+        }          
       });
-
     } else {
-      res.json({ack:'err', msg: 'No metadata saved'});
+      res.json({ack:'err', msg: 'No rekognition labels saved'});
     }
   });
 };
-
-// // Get and Save Image Labels from AWS rekognition
-// exports.rekognitionLabels = function(req, res){
-
-//     var key = req.body.key;
-//     var mediaId = req.body.id;
-
-//     getRekognitionLabels.get(key, function(err, labels){
-
-//         // save recognition labels to DB if any
-//         var labels = labels.Labels;
-//         if (labels !== null && typeof labels === 'object') {
-
-//             // make meta array
-//             var values = [];
-//             Object.keys(labels).forEach(function (key) {
-//                 let obj = labels[key];
-//                 values.push([mediaId, obj.Name, obj.Confidence]);
-//             });
-//             // make DB query
-//             var sql = "INSERT INTO rekognition (media_id, label, confidence) VALUES ?";
-//             connection.query(sql, [values], function(err, rows) {
-//                 if (err) {
-//                     return res.send({ack: 'err', msg: 'cant save rekognition labels'});
-//                 } else {
-//                     return res.send({ack: 'ok', msg: 'all rekognition labels saved'});
-//                 }
-              
-//             });
-
-//         } else {
-//             return res.send(JSON.stringify({ack: 'err', msg: 'no meta saved'}));
-//         }
-//     });
-//     //console.log(key);
-// };
 
 // // Attach media to album
 // exports.attachMedia = function(req, res){

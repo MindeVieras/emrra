@@ -47,9 +47,11 @@ exports.getInitialFiles = function(req, res) {
   const status = 1; // Media status ENABLED
   connection.query(`SELECT
                       m.*,
-                      GROUP_CONCAT('"', mm.meta_name, '":"', mm.meta_value SEPARATOR '",') AS metadata
+                      GROUP_CONCAT(DISTINCT '"', mm.meta_name, '":"', mm.meta_value, '"') AS metadata,
+                      GROUP_CONCAT(DISTINCT '"', rl.label, '":', rl.confidence) AS rekognition_labels
                     FROM media AS m
                       LEFT JOIN media_meta AS mm ON mm.media_id = m.id
+                      LEFT JOIN rekognition AS rl ON rl.media_id = m.id
                     WHERE m.entity_id = ? AND m.status = ?
                     GROUP BY m.id`, [entity_id, status], function(err, rows){
     if(err) {
@@ -57,18 +59,27 @@ exports.getInitialFiles = function(req, res) {
     } else {
       let media = [];
       rows.forEach(function(m){
+        // Metadata
         let metadata = {ack:'err', msg:'No metadata'};
         if (m.metadata) {
-          metadata = JSON.parse('{'+m.metadata+'"}');
+          metadata = JSON.parse('{'+m.metadata+'}');
           metadata.ack = 'ok';
         };
-        // metadata 
+        // Rekognition Labels
+        let rekognition_labels = {ack:'err', msg:'No rokognition labels found'};
+        if (m.rekognition_labels) {
+          rekognition_labels = JSON.parse('{'+m.rekognition_labels+'}');
+          rekognition_labels.ack = 'ok';
+        };
+
+        // media file
         media.push({
           uuid: m.uuid,
           name: m.org_filename,
           size: m.filesize,
           thumbnailUrl: require('../helpers/media').img(m.s3_key),
-          metadata
+          metadata,
+          rekognition_labels
         });
       });
       res.json(media);
