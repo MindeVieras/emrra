@@ -6,13 +6,12 @@ const s3 = new AWS.S3();
 const config = require('../config/config');
 
 // Image url helper
-exports.img = function(key) {
-  // console.log(key);
-  // var thumbKey = 'thumbs/'+size+'/'+path.basename(key);
+exports.img = function(key, size) {
+  var thumbKey = 'thumbs/'+size+'/'+path.basename(key);
 
   var params = {
     Bucket: config.bucket, 
-    Key: key,
+    Key: thumbKey,
     Expires: 60
   };
 

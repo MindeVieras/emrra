@@ -77,9 +77,10 @@ exports.getInitialFiles = function(req, res) {
           uuid: m.uuid,
           name: m.org_filename,
           size: m.filesize,
-          thumbnailUrl: require('../helpers/media').img(m.s3_key),
+          thumbnailUrl: require('../helpers/media').img(m.s3_key, 'thumb'),
           metadata,
-          rekognition_labels
+          rekognition_labels,
+          thumbs: {ack:'ok'}
         });
       });
       res.json(media);

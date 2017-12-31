@@ -2,6 +2,7 @@
 const uuidv4 = require('uuid/v4');
 const connection = require('../config/db');
 
+const generateImageThumbs = require('./aws/lambda/generate_thumbs');
 const getImageMeta = require('./aws/lambda/get_image_metadata');
 const getRekognitionLabels = require('./aws/rekognition/get_labels');
 
@@ -112,40 +113,13 @@ exports.saveRekognitionLabels = function(req, res){
   });
 };
 
-// // Attach media to album
-// exports.attachMedia = function(req, res){
-
-//     var albumId = req.body.album_id;
-//     var status = req.body.status;
-//     var media = req.body.media;
-
-//     // make media array
-//     var values = [];
-//     Object.keys(media).forEach(function(key) {
-//         let obj = media[key];
-//         values.push([obj['media_id']]);
-//     });
-//     //return res.send({ack: 'ok', msg: values});
-
-//     // make DB query
-//     var sql = "INSERT INTO media (id) VALUES ? ON DUPLICATE KEY UPDATE entity_id = ?, status = ?";
-//     connection.query(sql, [values, albumId, status], function(err, rows) {
-//         if (err) {
-//             return res.send(JSON.stringify({ack: 'err', msg: 'cant attach media'}));
-//         } else {
-//             return res.send(JSON.stringify({ack: 'ok', msg: rows}));
-//         }
-      
-//     });
-// };
-
-// // Generate Image Thumbnails
-// exports.generateThumb = function(req, res){
-//     var key = req.body.key;
-//     generateThumb.generate(key, function(err, response){
-//         return res.send({ack: 'ok', msg: response});
-//     });
-// };
+// Generate Image Thumbnails
+exports.generateImageThumbs = function(req, res){
+  var key = req.body.key;
+  generateImageThumbs.generate(key, function(err, response){
+    res.json({ack:'ok', msg: 'Image thumbnails generated', thumbs: response});
+  });
+};
 
 // // Generate Videos
 // exports.generateVideos = function(req, res){
