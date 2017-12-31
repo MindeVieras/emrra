@@ -1,7 +1,6 @@
 
 const connection = require('../config/db');
-
-// const Media = require('./media');
+const deleteFromS3 = require('./aws/s3/delete');
 
 // Gets trash items
 exports.getList = function(req, res){
@@ -43,17 +42,45 @@ exports.restore = function(req, res){
 exports.delete = function(req, res){
   if (typeof req.params.id != 'undefined' && !isNaN(req.params.id) && req.params.id > 0 && req.params.id.length) {
     const id = req.params.id;
-    connection.query('DELETE FROM media WHERE id = ?', [id], function(err, rows) {
+    connection.query('SELECT mime FROM media WHERE id = ?', [id], function(err, mime) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
-        if (rows.affectedRows === 1) {
-          res.json({ack:'ok', msg: 'Media file deleted', data: req.params.id});
-        } else {
-          res.json({ack:'err', msg: 'No such media file'});
+        const mimeType = mime[0].mime;
+        // If IMAGE
+        if (mimeType.includes('image')) {
+          // Firstly delete image and thumbnails from S3
+          deleteFromS3.deleteImage(id, function (err, data) {
+            if (err) {
+              res.json({ack:'err', msg: err});
+            }
+            else {
+              // Delete media
+              connection.query('DELETE FROM media WHERE id = ?', id);
+              // Delete meta
+              connection.query('DELETE FROM media_meta WHERE media_id = ?', id);
+              // Delete rekognition
+              connection.query('DELETE FROM rekognition WHERE media_id = ?', id);
+              res.json({ack:'ok', msg: 'Image deleted for good'});
+            }
+          });
+        }
+        else {
+          res.json({ack:'err', msg: 'Unknown MIME Type'});
         }
       }
     });
+    // connection.query('DELETE FROM media WHERE id = ?', [id], function(err, rows) {
+    //   if(err) {
+    //     res.json({ack:'err', msg: err.sqlMessage});
+    //   } else {
+    //     if (rows.affectedRows === 1) {
+    //       res.json({ack:'ok', msg: 'Media file deleted', data: req.params.id});
+    //     } else {
+    //       res.json({ack:'err', msg: 'No such media file'});
+    //     }
+    //   }
+    // });
 
   } else {
     res.json({ack:'err', msg: 'bad parameter'});
