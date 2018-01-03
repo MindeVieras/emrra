@@ -39,7 +39,7 @@ module.exports.get = function(key, cb){
           meta.aspect = row.display_aspect_ratio;
           meta.frame_rate = eval(row.r_frame_rate);
           meta.codec = row.codec_name;
-          if ('creation_time' in row.tags) meta.datetime = row.tags.creation_time;
+          if (row.tags && 'creation_time' in row.tags) meta.datetime = row.tags.creation_time;
         }
       });
     }
