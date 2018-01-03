@@ -65,22 +65,27 @@ exports.delete = function(req, res){
             }
           });
         }
+        // If VIDEO
+        else if (mimeType.includes('video')) {
+          // Firstly delete image and thumbnails from S3
+          deleteFromS3.deleteVideo(id, function (err, data) {
+            if (err) {
+              res.json({ack:'err', msg: err});
+            }
+            else {
+              // Delete media
+              connection.query('DELETE FROM media WHERE id = ?', id);
+              // Delete meta
+              connection.query('DELETE FROM media_meta WHERE media_id = ?', id);
+              res.json({ack:'ok', msg: 'Video deleted for good', data: data});
+            }
+          });
+        }
         else {
           res.json({ack:'err', msg: 'Unknown MIME Type'});
         }
       }
     });
-    // connection.query('DELETE FROM media WHERE id = ?', [id], function(err, rows) {
-    //   if(err) {
-    //     res.json({ack:'err', msg: err.sqlMessage});
-    //   } else {
-    //     if (rows.affectedRows === 1) {
-    //       res.json({ack:'ok', msg: 'Media file deleted', data: req.params.id});
-    //     } else {
-    //       res.json({ack:'err', msg: 'No such media file'});
-    //     }
-    //   }
-    // });
 
   } else {
     res.json({ack:'err', msg: 'bad parameter'});

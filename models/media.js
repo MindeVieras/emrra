@@ -3,7 +3,9 @@ const uuidv4 = require('uuid/v4');
 const connection = require('../config/db');
 
 const generateImageThumbs = require('./aws/lambda/generate_thumbs');
+const generateVideos = require('./aws/transcoder/generate_videos');
 const getImageMeta = require('./aws/lambda/get_image_metadata');
+const getVideoMeta = require('./aws/lambda/get_video_metadata');
 const getRekognitionLabels = require('./aws/rekognition/get_labels');
 
 exports.getAlbumMedia = function(id, cb) {
@@ -52,7 +54,7 @@ exports.putToTrash = function(req, res) {
 exports.saveImageMetadata = function(req, res){
   var key = req.body.key;
   var mediaId = req.body.media_id;
-  if (!key && !mediaId) {
+  if (!key || !mediaId) {
     res.json({ack:'err', msg: 'Wrong params'});
   } else {  
     getImageMeta.get(key, function (err, metadata) {
@@ -70,8 +72,44 @@ exports.saveImageMetadata = function(req, res){
         connection.query(sql, [values], function(err, rows) {
           if (err) {
             res.json({ack:'err', msg: err.sqlMessage});
+          } else {
+            res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
           }
-          res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
+        });
+
+      } else {
+        res.json({ack:'err', msg: 'No metadata saved'});
+      }
+    });
+  }
+};
+
+// Get video metadata from lambda and save to DB
+exports.saveVideoMetadata = function(req, res){
+  // firstly get metadata
+  var key = req.body.key;
+  var mediaId = req.body.media_id;
+  if (!key || !mediaId) {
+    res.json({ack:'err', msg: 'Wrong params'});
+  } else {
+    getVideoMeta.get(key, function (err, metadata) {
+      // save metadata to DB if any
+      if (metadata !== null && typeof metadata === 'object') {
+        // make meta array
+        var values = [];
+        Object.keys(metadata).forEach(function (key) {
+          let obj = metadata[key];
+          values.push([mediaId, key, obj]);
+        });
+
+        // make DB query
+        var sql = "INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?";
+        connection.query(sql, [values], function(err, rows) {
+          if (err) {
+            res.json({ack:'err', msg: err.sqlMessage});
+          } else {
+            res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
+          }
         });
 
       } else {
@@ -121,45 +159,15 @@ exports.generateImageThumbs = function(req, res){
   });
 };
 
-// // Generate Videos
-// exports.generateVideos = function(req, res){
-//     var key = req.body.key;
-//     generateVideos.generate(key, function(err, response){
-//         return res.send({ack: 'ok', msg: response});
-//     });
-// };
-
-// // Get video metadata from lambda and save to DB
-// exports.saveVideoMeta = function(req, res){
-//     // res.setHeader('Content-Type', 'application/json');
-//     // firstly get metadata
-//     var key = req.body.key;
-//     var mediaId = req.body.id;
-//     getVideoMeta.get(key, function (err, metadata) {
-        
-//         if (err) return res.send(JSON.stringify({ack: 'err', msg: err}));
-      
-//         // save metadata to DB if any
-//         if (metadata !== null && typeof metadata === 'object') {
-//             // make meta array
-//             var values = [];
-//             Object.keys(metadata).forEach(function (key) {
-//                 let obj = metadata[key];
-//                 values.push([mediaId, key, obj]);
-//             });
-
-//             // make DB query
-//             var sql = "INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?";
-//             connection.query(sql, [values], function(err, rows) {
-//                 if (err) return res.send(JSON.stringify({ack: 'err', msg: 'cant save meta'}));
-//                 return res.send(JSON.stringify({ack: 'ok', data: metadata, msg: 'all meta saved'}));
-//             });
-
-//         } else {
-//             return res.send(JSON.stringify({ack: 'err', msg: 'no meta saved'}));
-//         }
-//     });
-// };
+// Generate Videos
+exports.generateVideos = function(req, res){
+  var key = req.body.key;
+  generateVideos.generate(key, function(err, response){
+    setTimeout(function(){
+      res.json({ack:'ok', msg: 'Image thumbnails generated', thumbs: response});
+    }, 2000);
+  });
+};
 
 // // Gets presigned image url
 // exports.getImageUrl = function(req, res){

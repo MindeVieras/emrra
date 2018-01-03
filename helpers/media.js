@@ -20,3 +20,18 @@ exports.img = function(key, size) {
     
 };
 
+// Video url helper
+exports.video = function (key, size) {
+  
+  var videoKey = 'videos/'+size+'/'+path.basename(key);
+
+  var params = {
+    Bucket: config.bucket, 
+    Key: videoKey,
+    Expires: 60
+  };
+
+  var url = s3.getSignedUrl('getObject', params);
+  return url;
+    
+};

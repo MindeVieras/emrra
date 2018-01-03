@@ -59,29 +59,53 @@ exports.getInitialFiles = function(req, res) {
     } else {
       let media = [];
       rows.forEach(function(m){
-        // Metadata
-        let metadata = {ack:'err', msg:'No metadata'};
-        if (m.metadata) {
-          metadata = JSON.parse('{'+m.metadata+'}');
-          metadata.ack = 'ok';
-        };
-        // Rekognition Labels
-        let rekognition_labels = {ack:'err', msg:'No rokognition labels found'};
-        if (m.rekognition_labels) {
-          rekognition_labels = JSON.parse('{'+m.rekognition_labels+'}');
-          rekognition_labels.ack = 'ok';
-        };
+        // If Image
+        if (m.mime.includes('image')) {        
+          // Metadata
+          let metadata = {ack:'err', msg:'No metadata'};
+          if (m.metadata) {
+            metadata = JSON.parse('{'+m.metadata+'}');
+            metadata.ack = 'ok';
+          };
+          // Rekognition Labels
+          let rekognition_labels = {ack:'err', msg:'No rokognition labels found'};
+          if (m.rekognition_labels) {
+            rekognition_labels = JSON.parse('{'+m.rekognition_labels+'}');
+            rekognition_labels.ack = 'ok';
+          };
 
-        // media file
-        media.push({
-          uuid: m.uuid,
-          name: m.org_filename,
-          size: m.filesize,
-          thumbnailUrl: require('../helpers/media').img(m.s3_key, 'thumb'),
-          metadata,
-          rekognition_labels,
-          thumbs: {ack:'ok'}
-        });
+          // media file
+          media.push({
+            uuid: m.uuid,
+            name: m.org_filename,
+            size: m.filesize,
+            mime: 'image',
+            thumbnailUrl: require('../helpers/media').img(m.s3_key, 'thumb'),
+            metadata,
+            rekognition_labels,
+            thumbs: {ack:'ok'}
+          });
+        }
+        // If Video
+        else if (m.mime.includes('video')) {        
+          // Metadata
+          let metadata = {ack:'err', msg:'No metadata'};
+          if (m.metadata) {
+            metadata = JSON.parse('{'+m.metadata+'}');
+            metadata.ack = 'ok';
+          };
+
+          // media file
+          media.push({
+            uuid: m.uuid,
+            name: m.org_filename,
+            size: m.filesize,
+            mime: 'video',
+            //thumbnailUrl: require('../helpers/media').video(m.s3_key, 'medium'),
+            metadata,
+            videos: {ack:'ok', video: require('../helpers/media').video(m.s3_key, 'medium')}
+          });
+        }
       });
       res.json(media);
     }
