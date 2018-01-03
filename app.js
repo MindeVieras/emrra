@@ -9,11 +9,11 @@ const bodyParser = require('body-parser');
 const app = express();
 
 app.use(morgan('dev'));
+app.use(bodyParser.json({limit: '500mb'}));
 app.use(bodyParser.urlencoded({
   extended: true,
   limit: '500mb'
 }));
-app.use(bodyParser.json());
 
 const corsOptions = {
   origin: '*',
