@@ -50,83 +50,85 @@ exports.putToTrash = function(req, res) {
   });
 }
 
-// Get image metadata from lambda and save to DB
-exports.saveImageMetadata = function(req, res){
-  var key = req.body.key;
-  var mediaId = req.body.media_id;
-  if (!key || !mediaId) {
-    res.json({ack:'err', msg: 'Wrong params'});
-  } else {  
-    getImageMeta.get(key, function (err, metadata) {
-      // save metadata to DB if any
-      if (metadata !== null && typeof metadata === 'object') {
-
-        // make meta array
-        var values = [];
-        Object.keys(metadata).forEach(function (key) {
-          let obj = metadata[key];
-          values.push([mediaId, key, obj]);
-        });
-        // make DB query
-        var sql = 'INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?';
-        connection.query(sql, [values], function(err, rows) {
-          if (err) {
-            res.json({ack:'err', msg: err.sqlMessage});
-          } else {
-            res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
-          }
-        });
-
-      } else {
-        res.json({ack:'err', msg: 'No metadata saved'});
-      }
-    });
-  }
-};
-
-// Get video metadata from lambda and save to DB
-exports.saveVideoMetadata = function(req, res){
-  // firstly get metadata
+// Get media metadata from lambda and save to DB
+exports.saveMetadata = function(req, res){
   var mediaId = req.body.media_id;
   if (!mediaId) {
     res.json({ack:'err', msg: 'Wrong params'});
   } else {
-    connection.query('SELECT s3_key FROM media WHERE id = ?', mediaId, function(err, s3_key) {
+    connection.query('SELECT s3_key, mime FROM media WHERE id = ?', mediaId, function(err, media) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
-        const key = s3_key[0].s3_key;    
-        getVideoMeta.get(key, function (err, metadata) {
-          // save metadata to DB if any
-          if (metadata !== null && typeof metadata === 'object') {
-            // Delete old meta before save
-            connection.query('DELETE FROM media_meta WHERE media_id = ?', mediaId, function(err, rows) {
-              if(err) {
-                res.json({ack:'err', msg: err.sqlMessage});
-              } else {
-                // make meta array
-                var values = [];
-                Object.keys(metadata).forEach(function(key) {
-                  let obj = metadata[key];
-                  values.push([mediaId, key, obj]);
-                });
+        const key = media[0].s3_key;
+        const mime = media[0].mime;
+        if (mime.includes('image')) {
+          getImageMeta.get(key, function (err, metadata) {
+            // save metadata to DB if any
+            if (metadata !== null && typeof metadata === 'object') {
+              // Delete old meta before save
+              connection.query('DELETE FROM media_meta WHERE media_id = ?', mediaId, function(err, rows) {
+                if(err) {
+                  res.json({ack:'err', msg: err.sqlMessage});
+                } else {            
+                  // make meta array
+                  var values = [];
+                  Object.keys(metadata).forEach(function (key) {
+                    let obj = metadata[key];
+                    values.push([mediaId, key, obj]);
+                  });
+                  // make DB query
+                  var sql = 'INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?';
+                  connection.query(sql, [values], function(err, rows) {
+                    if (err) {
+                      res.json({ack:'err', msg: err.sqlMessage});
+                    } else {
+                      res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
+                    }
+                  });
+                }
+              });
+            } else {
+              res.json({ack:'err', msg: 'No metadata saved'});
+            }
+          });
+        }
+        else if (mime.includes('video')) {
+          getVideoMeta.get(key, function (err, metadata) {
+            // save metadata to DB if any
+            if (metadata !== null && typeof metadata === 'object') {
+              // Delete old meta before save
+              connection.query('DELETE FROM media_meta WHERE media_id = ?', mediaId, function(err, rows) {
+                if(err) {
+                  res.json({ack:'err', msg: err.sqlMessage});
+                } else {
+                  // make meta array
+                  var values = [];
+                  Object.keys(metadata).forEach(function(key) {
+                    let obj = metadata[key];
+                    values.push([mediaId, key, obj]);
+                  });
 
-                // make DB query
-                var sql = "INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?";
-                connection.query(sql, [values], function(err, rows) {
-                  if (err) {
-                    res.json({ack:'err', msg: err.sqlMessage});
-                  } else {
-                    res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
-                  }
-                });
-              }
-            });
+                  // make DB query
+                  var sql = "INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?";
+                  connection.query(sql, [values], function(err, rows) {
+                    if (err) {
+                      res.json({ack:'err', msg: err.sqlMessage});
+                    } else {
+                      res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
+                    }
+                  });
+                }
+              });
 
-          } else {
-            res.json({ack:'err', msg: 'No metadata saved'});
-          }
-        });
+            } else {
+              res.json({ack:'err', msg: 'No metadata saved'});
+            }
+          });
+        }
+        else {
+          res.json({ack:'err', msg: 'Unvalid mime type'});
+        }
       }
     });
   }
