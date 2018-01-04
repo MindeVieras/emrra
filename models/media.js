@@ -87,33 +87,46 @@ exports.saveImageMetadata = function(req, res){
 // Get video metadata from lambda and save to DB
 exports.saveVideoMetadata = function(req, res){
   // firstly get metadata
-  var key = req.body.key;
   var mediaId = req.body.media_id;
-  if (!key || !mediaId) {
+  if (!mediaId) {
     res.json({ack:'err', msg: 'Wrong params'});
   } else {
-    getVideoMeta.get(key, function (err, metadata) {
-      // save metadata to DB if any
-      if (metadata !== null && typeof metadata === 'object') {
-        // make meta array
-        var values = [];
-        Object.keys(metadata).forEach(function (key) {
-          let obj = metadata[key];
-          values.push([mediaId, key, obj]);
-        });
+    connection.query('SELECT s3_key FROM media WHERE id = ?', mediaId, function(err, s3_key) {
+      if(err) {
+        res.json({ack:'err', msg: err.sqlMessage});
+      } else {
+        const key = s3_key[0].s3_key;    
+        getVideoMeta.get(key, function (err, metadata) {
+          // save metadata to DB if any
+          if (metadata !== null && typeof metadata === 'object') {
+            // Delete old meta before save
+            connection.query('DELETE FROM media_meta WHERE media_id = ?', mediaId, function(err, rows) {
+              if(err) {
+                res.json({ack:'err', msg: err.sqlMessage});
+              } else {
+                // make meta array
+                var values = [];
+                Object.keys(metadata).forEach(function(key) {
+                  let obj = metadata[key];
+                  values.push([mediaId, key, obj]);
+                });
 
-        // make DB query
-        var sql = "INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?";
-        connection.query(sql, [values], function(err, rows) {
-          if (err) {
-            res.json({ack:'err', msg: err.sqlMessage});
+                // make DB query
+                var sql = "INSERT INTO media_meta (media_id, meta_name, meta_value) VALUES ?";
+                connection.query(sql, [values], function(err, rows) {
+                  if (err) {
+                    res.json({ack:'err', msg: err.sqlMessage});
+                  } else {
+                    res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
+                  }
+                });
+              }
+            });
+
           } else {
-            res.json({ack:'ok', msg: 'Metadata saved', metadata: metadata});
+            res.json({ack:'err', msg: 'No metadata saved'});
           }
         });
-
-      } else {
-        res.json({ack:'err', msg: 'No metadata saved'});
       }
     });
   }
@@ -168,19 +181,3 @@ exports.generateVideos = function(req, res){
     }, 2000);
   });
 };
-
-// // Gets presigned image url
-// exports.getImageUrl = function(req, res){
-//     var key = req.body.key;
-//     var style = req.body.style;
-//     var url = helpers_custom.img(key, style);
-//     return res.send({ack: 'ok', msg: url});
-// };
-
-// // Gets presigned video url
-// exports.getVideoUrl = function(req, res){
-//     var key = req.body.key;
-//     var preset = req.body.preset;
-//     var url = helpers_custom.video(key, preset);
-//     return res.send({ack: 'ok', msg: url});
-// };

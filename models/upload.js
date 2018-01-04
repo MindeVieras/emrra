@@ -77,6 +77,7 @@ exports.getInitialFiles = function(req, res) {
           // media file
           media.push({
             uuid: m.uuid,
+            media_id: m.id,
             name: m.org_filename,
             size: m.filesize,
             mime: 'image',
@@ -98,6 +99,7 @@ exports.getInitialFiles = function(req, res) {
           // media file
           media.push({
             uuid: m.uuid,
+            media_id: m.id,
             name: m.org_filename,
             size: m.filesize,
             mime: 'video',
