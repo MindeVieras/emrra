@@ -136,34 +136,55 @@ exports.saveMetadata = function(req, res){
 
 // Get and Save Image Labels from AWS rekognition
 exports.saveRekognitionLabels = function(req, res){
-  var key = req.body.key;
   var mediaId = req.body.media_id;
-  getRekognitionLabels.get(key, function(err, labels){
-    // save recognition labels to DB if any
-    var labels = labels.Labels;
-    if (labels !== null && typeof labels === 'object') {
-
-      // make meta array
-      var values = [];
-      var labelsObj = new Object();
-      Object.keys(labels).forEach(function (key) {
-        let obj = labels[key];
-        values.push([mediaId, obj.Name, obj.Confidence]);
-        labelsObj[obj.Name] = obj.Confidence;
-      });
-      // make DB query
-      var sql = "INSERT INTO rekognition (media_id, label, confidence) VALUES ?";
-      connection.query(sql, [values], function(err, rows) {
-        if (err) {
-          res.json({ack:'err', msg: err.sqlMessage});
-        } else {
-          res.json({ack:'ok', msg: 'Rekognition Labels saved', rekognition_labels: labelsObj});
-        }          
-      });
-    } else {
-      res.json({ack:'err', msg: 'No rekognition labels saved'});
-    }
-  });
+  if (!mediaId) {
+    res.json({ack:'err', msg: 'Wrong params'});
+  } else {
+    connection.query('SELECT s3_key, mime FROM media WHERE id = ?', mediaId, function(err, media) {
+      if(err) {
+        res.json({ack:'err', msg: err.sqlMessage});
+      } else {
+        const key = media[0].s3_key;
+        const mime = media[0].mime;
+        // Get Labels
+        getRekognitionLabels.get(key, mime, function(err, labels){
+          if (err) {
+            res.json({ack:'err', msg: err});
+          } else {          
+            // save recognition labels to DB if any
+            if (labels !== null && typeof labels === 'object') {
+              // Delete old meta before save
+              connection.query('DELETE FROM rekognition WHERE media_id = ?', mediaId, function(err, rows) {
+                if(err) {
+                  res.json({ack:'err', msg: err.sqlMessage});
+                } else {
+                  // make meta array
+                  var values = [];
+                  var labelsObj = new Object();
+                  Object.keys(labels).forEach(function (key) {
+                    let obj = labels[key];
+                    values.push([mediaId, obj.Name, obj.Confidence]);
+                    labelsObj[obj.Name] = obj.Confidence;
+                  });
+                  // make DB query
+                  var sql = "INSERT INTO rekognition (media_id, label, confidence) VALUES ?";
+                  connection.query(sql, [values], function(err, rows) {
+                    if (err) {
+                      res.json({ack:'err', msg: err.sqlMessage});
+                    } else {
+                      res.json({ack:'ok', msg: 'Rekognition Labels saved', rekognition_labels: labelsObj});
+                    }          
+                  });
+                }
+              });
+            } else {
+              res.json({ack:'err', msg: 'No rekognition labels saved'});
+            }
+          }
+        });
+      }
+    });
+  }
 };
 
 // Generate Image Thumbnails

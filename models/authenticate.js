@@ -33,18 +33,26 @@ exports.authenticate = function(req, res){
                 res.json({ack:'err', msg: err.sqlMessage});
               } else {
                 if (rows.affectedRows === 1) {                
+                  // Return User object if success
                   const jwtData = {
                     id: user[0].id,
                     username: user[0].username,
                     access_level: user[0].access_level
                   };
                   const token = jwt.sign(jwtData, config.secret_key);
+                  let accessLevel = 'simple';
+                  if (user[0].access_level >= 50 && user[0].access_level < 100) {
+                    accessLevel = 'editor';
+                  } else if (user[0].access_level === 100) {
+                    accessLevel = 'admin';
+                  }
                   let userData = {
                     id: user[0].id,
                     username: user[0].username,
                     display_name: user[0].display_name,
-                    email: user[0].user,
-                    access_level: user[0].access_level,
+                    email: user[0].email,
+                    created: user[0].created,
+                    access_level: accessLevel,
                     token
                   };
                   res.json({ack:'ok', msg: 'Authentication ok', data: userData});

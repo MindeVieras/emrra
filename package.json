@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/MindeVieras/emrra#readme",
   "dependencies": {
-    "aws-sdk": "^2.153.0",
+    "aws-sdk": "^2.176.0",
     "bcrypt": "^1.0.3",
     "body-parser": "^1.18.2",
     "cors": "^2.8.4",

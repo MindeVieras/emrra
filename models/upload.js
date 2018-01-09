@@ -95,6 +95,12 @@ exports.getInitialFiles = function(req, res) {
             metadata = JSON.parse('{'+m.metadata+'}');
             metadata.ack = 'ok';
           };
+          // Rekognition Labels
+          let rekognition_labels = {ack:'err', msg:'No rokognition labels found'};
+          if (m.rekognition_labels) {
+            rekognition_labels = JSON.parse('{'+m.rekognition_labels+'}');
+            rekognition_labels.ack = 'ok';
+          };
 
           // media file
           media.push({
@@ -105,6 +111,7 @@ exports.getInitialFiles = function(req, res) {
             mime: 'video',
             //thumbnailUrl: require('../helpers/media').video(m.s3_key, 'medium'),
             metadata,
+            rekognition_labels,
             videos: {ack:'ok', video: require('../helpers/media').video(m.s3_key, 'medium')}
           });
         }

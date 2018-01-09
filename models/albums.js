@@ -45,12 +45,13 @@ exports.getList = function(req, res){
 // Gets one album
 exports.getOne = function(req, res){
   if (typeof req.params.id != 'undefined' && !isNaN(req.params.id) && req.params.id > 0 && req.params.id.length) {
-    connection.query(`SELECT * FROM albums WHERE id = ? LIMIT 1`, [req.params.id], function(err, rows) {
+    const albumId = req.params.id;
+    connection.query(`SELECT * FROM albums WHERE id = ? LIMIT 1`, albumId, function(err, album) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
-        if (rows.length) {
-          res.json({ack:'ok', msg: 'One album', data: rows[0]});
+        if (album.length) {
+          res.json({ack:'ok', msg: 'One album', data: album[0]});
         } else {
           res.json({ack:'err', msg: 'No such Album'});
         }
