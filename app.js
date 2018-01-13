@@ -32,6 +32,7 @@ require('./routes/albums')(app);
 require('./routes/media')(app);
 require('./routes/upload')(app);
 require('./routes/trash')(app);
+require('./routes/front')(app);
 
 // Start HTTP server
 http.createServer(app).listen(port, function(){
