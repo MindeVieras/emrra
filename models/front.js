@@ -6,10 +6,15 @@ exports.getList = function(req, res){
 
   connection.query(`SELECT
                       a.id, a.name,
-                      GROUP_CONCAT(DISTINCT m.s3_key) AS media
+                      GROUP_CONCAT(DISTINCT
+                                    CASE WHEN m.status = 1
+                                      THEN m.s3_key
+                                      ELSE NULL
+                                    END ORDER BY m.id ASC) AS media
                     FROM albums AS a
                       LEFT JOIN media AS m ON m.entity_id = a.id
-                    GROUP BY a.id DESC LIMIT 500`, function(err, albums) {
+                    GROUP BY a.id DESC
+                    LIMIT 500`, function(err, albums) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
@@ -20,7 +25,7 @@ exports.getList = function(req, res){
           if (album.media) {
             album.media.split(',').map(function(m){
               const mediaObj = new Object();
-              mediaObj.key = require('../helpers/media').img(m, 'icon');
+              mediaObj.key = require('../helpers/media').img(m, 'small');
               media.push(mediaObj);
             });
           }

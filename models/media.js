@@ -189,10 +189,26 @@ exports.saveRekognitionLabels = function(req, res){
 
 // Generate Image Thumbnails
 exports.generateImageThumbs = function(req, res){
-  var key = req.body.key;
-  generateImageThumbs.generate(key, function(err, response){
-    res.json({ack:'ok', msg: 'Image thumbnails generated', thumbs: response});
-  });
+  var mediaId = req.body.media_id;
+  if (!mediaId) {
+    res.json({ack:'err', msg: 'Wrong params'});
+  } else {
+    connection.query('SELECT s3_key FROM media WHERE id = ?', mediaId, function(err, s3_key) {
+      if(err) {
+        res.json({ack:'err', msg: err.sqlMessage});
+      } else {
+        const key = s3_key[0].s3_key;
+        // Generate Thumbnails
+        generateImageThumbs.generate(key, function(err, response){
+          if (err) {
+            res.json({ack:'err', msg: err});
+          } else {
+            res.json({ack:'ok', msg: 'Image thumbnails generated', thumbs: response});
+          }
+        });
+      }
+    });
+  }
 };
 
 // Generate Videos
