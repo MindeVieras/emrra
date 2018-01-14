@@ -25,7 +25,7 @@ exports.getList = function(req, res){
           if (album.media) {
             album.media.split(',').map(function(m){
               const mediaObj = new Object();
-              mediaObj.key = require('../helpers/media').img(m, 'mini');
+              mediaObj.key = require('../helpers/media').img(m, 'thumb');
               media.push(mediaObj);
             });
           }
