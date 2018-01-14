@@ -14,7 +14,7 @@ exports.getList = function(req, res){
                     FROM albums AS a
                       LEFT JOIN media AS m ON m.entity_id = a.id
                     GROUP BY a.id DESC
-                    LIMIT 500`, function(err, albums) {
+                    LIMIT 40`, function(err, albums) {
       if(err) {
         res.json({ack:'err', msg: err.sqlMessage});
       } else {
