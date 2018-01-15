@@ -8,9 +8,9 @@ exports.getList = function(req, res){
                       a.id, a.name,
                       GROUP_CONCAT(DISTINCT
                                     CASE WHEN m.status = 1
-                                      THEN m.s3_key
+                                      THEN CONCAT(m.s3_key, ',', m.mime)
                                       ELSE NULL
-                                    END ORDER BY m.id ASC) AS media
+                                    END ORDER BY m.id ASC SEPARATOR '|') AS media
                     FROM albums AS a
                       LEFT JOIN media AS m ON m.entity_id = a.id
                     GROUP BY a.id DESC
@@ -21,11 +21,20 @@ exports.getList = function(req, res){
         let albums_data = [];
 
         albums.map(function(album){
+
+          // Media
           let media = [];
           if (album.media) {
-            album.media.split(',').map(function(m){
+            // Split media rows
+            album.media.split('|').map(function(m){
+              // Split values
+              const values = m.split(',').map(function(field){
+                return field;
+              });
+              // Make object and push to media
               const mediaObj = new Object();
-              mediaObj.key = require('../helpers/media').img(m, 'thumb');
+              mediaObj.key = require('../helpers/media').img(values[0], 'thumb');
+              mediaObj.mime = values[1].includes('image') ? 'image' : 'video';
               media.push(mediaObj);
             });
           }
