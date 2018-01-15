@@ -33,8 +33,13 @@ exports.getList = function(req, res){
               });
               // Make object and push to media
               const mediaObj = new Object();
-              mediaObj.key = require('../helpers/media').img(values[0], 'thumb');
-              mediaObj.mime = values[1].includes('image') ? 'image' : 'video';
+              const mime = values[1].includes('image') ? 'image' : 'video';
+              if (mime === 'video') {
+                mediaObj.key = require('../helpers/media').video(values[0], 'medium');
+              } else {
+                mediaObj.key = require('../helpers/media').img(values[0], 'thumb');
+              }
+              mediaObj.mime = mime;
               media.push(mediaObj);
             });
           }
