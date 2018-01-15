@@ -8,7 +8,14 @@ exports.getList = function(req, res){
                       a.id, a.name,
                       GROUP_CONCAT(DISTINCT
                                     CASE WHEN m.status = 1
-                                      THEN CONCAT(m.s3_key, ',', m.mime)
+                                      THEN CONCAT(
+                                          m.s3_key, ',',
+                                          m.mime, ',',
+                                          (SELECT meta_value FROM media_meta
+                                            WHERE meta_name = 'width' AND media_id = m.id), ',',
+                                          (SELECT meta_value FROM media_meta
+                                            WHERE meta_name = 'height' AND media_id = m.id)
+                                        )
                                       ELSE NULL
                                     END ORDER BY m.id ASC SEPARATOR '|') AS media
                     FROM albums AS a
@@ -40,6 +47,8 @@ exports.getList = function(req, res){
                 mediaObj.key = require('../helpers/media').img(values[0], 'thumb');
               }
               mediaObj.mime = mime;
+              mediaObj.width = values[2];
+              mediaObj.height = values[3];
               media.push(mediaObj);
             });
           }
