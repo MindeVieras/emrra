@@ -7,12 +7,14 @@ exports.getList = function(req, res){
   connection.query(`SELECT
                       a.id, a.name,
                       GROUP_CONCAT(DISTINCT
-                                    CASE WHEN m.status = 1
-                                      THEN CONCAT(
-                                          m.s3_key, ',',
-                                          m.mime, ',',
+                                    CASE
+                                      WHEN m.status = 1
+                                      THEN CONCAT_WS(
+                                          ',',
+                                          m.s3_key,
+                                          m.mime,
                                           (SELECT meta_value FROM media_meta
-                                            WHERE meta_name = 'width' AND media_id = m.id), ',',
+                                            WHERE meta_name = 'width' AND media_id = m.id),
                                           (SELECT meta_value FROM media_meta
                                             WHERE meta_name = 'height' AND media_id = m.id)
                                         )
