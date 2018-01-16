@@ -2,8 +2,6 @@
 .sass-cache
 node_modules
 
-aws-keys.json
-
 /lambda
 
 .gitignore
