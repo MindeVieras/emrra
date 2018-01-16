@@ -1,6 +1,5 @@
 
 const connection = require('../config/db');
-const _ = require('lodash');
 
 // Gets albums
 exports.getList = function(req, res){
@@ -37,13 +36,14 @@ exports.getList = function(req, res){
           if (album.media) {
             // Split media rows
             album.media.split('|').map(function(m){
+              // Make object and push to media
+              const mediaObj = new Object();
               // Split values
               const values = m.split(',').map(function(field){
                 return field;
               });
-              // Make object and push to media
-              const mediaObj = new Object();
-              const mime = _.includes(values[1], 'image') ? 'image' : 'video';
+              const mimeType = values[1] || 'image';
+              const mime = mimeType.includes('image') ? 'image' : 'video';
               if (mime === 'video') {
                 mediaObj.key = require('../helpers/media').video(values[0], 'medium');
               } else {

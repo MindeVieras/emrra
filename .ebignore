@@ -1,16 +1,12 @@
 .git
 .sass-cache
 node_modules
-bower_components
 
-public/scripts
-public/sass
+aws-keys.json
 
-/uploads
 /lambda
 
 .gitignore
-bower.json
 GruntFile.js
 README.md
 
