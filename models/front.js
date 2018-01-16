@@ -1,5 +1,6 @@
 
 const connection = require('../config/db');
+const _ = require('lodash');
 
 // Gets albums
 exports.getList = function(req, res){
@@ -42,8 +43,7 @@ exports.getList = function(req, res){
               });
               // Make object and push to media
               const mediaObj = new Object();
-              const mimeType = values[1];
-              const mime = mimeType.includes('image') ? 'image' : 'video';
+              const mime = _.includes(values[1], 'image') ? 'image' : 'video';
               if (mime === 'video') {
                 mediaObj.key = require('../helpers/media').video(values[0], 'medium');
               } else {
